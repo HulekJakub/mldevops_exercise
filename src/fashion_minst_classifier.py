@@ -38,7 +38,7 @@ y_val_oh = F.one_hot(y_val, n_classes)
 
 class FashionMnistClassifier(nn.Module):
     def __init__(self):
-        super(FashionMnistClassifier, self).__init__()
+        super().__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(28 * 28, 100)  # 8 features, 16 neurons in first hidden layer
         self.output = nn.Linear(100, n_classes)  # Output layer
