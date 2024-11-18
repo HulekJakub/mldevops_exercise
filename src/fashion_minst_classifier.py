@@ -44,20 +44,34 @@ y_val_oh = F.one_hot(y_val, n_classes)
 
 
 class FashionMnistClassifier(nn.Module):
+    """
+    Class implementing simple DNN for classification of 28X28 images
+    """
+
     def __init__(self):
         super().__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(28 * 28, 100)  # 8 features, 16 neurons in first hidden layer
         self.output = nn.Linear(100, n_classes)  # Output layer
 
-    def forward(self, x):
+    def forward(self, x: torch.tensor) -> torch.tensor:
+        """
+        Calculate output of the DNN
+        """
         x = self.flatten(x)
         x = F.sigmoid(self.fc1(x))
         x = F.softmax(self.output(x), dim=-1)
         return x
 
 
-def train(lr=0.02, epochs=100):
+def train(lr: float = 0.02, epochs: int = 100) -> float:
+    """
+    Function creates and tests FashionMnistClassifier model on FashionMnist dataset
+
+    Keyword arguments:
+    lr: float -- Adam optimizer learning rate (default 0.02)
+    epochs: int -- number of epochs of training (default 100)
+    """
     model = FashionMnistClassifier()
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -117,7 +131,10 @@ def train(lr=0.02, epochs=100):
     return acc
 
 
-def objective(trial):
+def objective(trial: optuna.trial) -> float:
+    """
+    Objective function for optuna study
+    """
     lr = trial.suggest_float("lr", 1e-4, 1e-1, log=True)
     epochs = trial.suggest_int("epochs", 20, 150)
     return -train(lr=lr, epochs=epochs)
