@@ -6,6 +6,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from sklearn.model_selection import train_test_split
+import wandb
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+print(device)
+
 
 fashion_mnist = torchvision.datasets.FashionMNIST("./", download=True, train=True)
 fashion_mnist_test = torchvision.datasets.FashionMNIST("./", download=True, train=False)
@@ -59,7 +65,22 @@ labels = torch.tensor(y_train_oh, dtype=torch.float32)
 val_inputs = torch.tensor(X_val, dtype=torch.float32)
 val_labels = torch.tensor(y_val_oh, dtype=torch.float32)
 
+
 epochs = 200
+
+run = wandb.init(
+    project="fashion-mnist-aml",
+    config={
+        "learning_rate": 0.02,
+        "architecture": "1 hidden",
+        "dataset": "FashionMnist",
+        "epochs": epochs,
+    },
+)
+artifact = wandb.Artifact(name="code", type="file")
+artifact.add_file(local_path="src/fashion_minst_classifier.py")
+run.log_artifact(artifact)
+
 for epoch in range(epochs):
     # Forward pass
     model.train()
@@ -81,11 +102,13 @@ for epoch in range(epochs):
 
         y_pred_val = torch.argmax(val_outputs, dim=-1)
         val_acc = torch.sum(y_pred_val == y_val) / val_inputs.shape[0]
+    wandb.log({"acc": train_acc, "loss": loss.item(), "val_acc": val_acc, "val_loss": val_loss.item()})
 
     if (epoch + 1) % 5 == 0:
         print(
             f"Epoch [{epoch+1}/{epochs}], Acc:{train_acc.item():.4f}, ValAcc:{val_acc.item():.4f},  Loss: {loss.item():.4f}, ValLoss: {val_loss.item():.4f}"
         )
+wandb.finish()
 
 with torch.no_grad():
     y_predicted = model(torch.tensor(X_test, dtype=torch.float32))
